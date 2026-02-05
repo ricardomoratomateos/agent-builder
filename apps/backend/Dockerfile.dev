@@ -1,0 +1,10 @@
+# Development Dockerfile with hot reload
+FROM node:20-slim
+
+WORKDIR /app
+
+# Expose backend and debug ports
+EXPOSE 3000 9229
+
+# Start in development mode with watch
+CMD ["npm", "run", "dev"]

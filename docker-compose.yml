@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.dev
+    container_name: agent-builder-backend-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229" # Debug port
+    volumes:
+      - ./apps/backend/src:/app/src
+      - ./apps/backend/package.json:/app/package.json
+      - ./apps/backend/tsconfig.json:/app/tsconfig.json
+      - ./apps/backend/nest-cli.json:/app/nest-cli.json
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - BACKEND_PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/agent-builder
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      - CORS_ORIGIN=http://localhost:3001
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - agent-builder-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    container_name: agent-builder-frontend-dev
+    ports:
+      - "3001:5173"
+    volumes:
+      - ./apps/frontend/src:/app/src
+      - ./apps/frontend/public:/app/public
+      - ./apps/frontend/index.html:/app/index.html
+      - ./apps/frontend/vite.config.ts:/app/vite.config.ts
+      - ./apps/frontend/tsconfig.json:/app/tsconfig.json
+      - ./apps/frontend/tsconfig.app.json:/app/tsconfig.app.json
+      - ./apps/frontend/tsconfig.node.json:/app/tsconfig.node.json
+      - ./apps/frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./apps/frontend/postcss.config.js:/app/postcss.config.js
+      - ./apps/frontend/package.json:/app/package.json
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - agent-builder-network
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: agent-builder-mongodb-dev
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=agent-builder
+    networks:
+      - agent-builder-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agent-builder-redis-dev
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    networks:
+      - agent-builder-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: agent-builder-qdrant-dev
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
+    networks:
+      - agent-builder-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  agent-builder-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  redis-data:
+  qdrant-data:

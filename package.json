@@ -1,0 +1,35 @@
+{
+  "name": "agent-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agent Builder - Visual workflow builder for AI agents with testing and cost optimization",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "type-check": "turbo type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky install",
+    "docker:dev": "docker-compose up --build",
+    "docker:dev:detach": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
+    "docker:prod:down": "docker-compose -f docker-compose.prod.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "prettier": "^3.4.2",
+    "eslint": "^9.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

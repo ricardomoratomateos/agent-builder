@@ -1,0 +1,10 @@
+# Development Dockerfile with hot reload
+FROM node:20-slim
+
+WORKDIR /app
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Start in development mode
+CMD ["npm", "run", "dev"]
