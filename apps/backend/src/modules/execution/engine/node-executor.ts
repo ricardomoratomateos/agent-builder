@@ -1,57 +1,42 @@
 import { Injectable } from '@nestjs/common';
+import { NodeExecutionStrategy, ExecutionResult } from '../strategies/node-execution.strategy';
+import { StartNodeStrategy } from '../strategies/start-node.strategy';
+import { LLMNodeStrategy } from '../strategies/llm-node.strategy';
+import { EndNodeStrategy } from '../strategies/end-node.strategy';
+import { ConditionNodeStrategy } from '../strategies/condition-node.strategy';
+import { RAGNodeStrategy } from '../strategies/rag-node.strategy';
+import { ToolNodeStrategy } from '../strategies/tool-node.strategy';
 
 @Injectable()
 export class NodeExecutor {
-  async execute(node: any, input: any): Promise<any> {
-    // TODO: Implement node execution based on type
-    // Supported types: LLM, RAG, Condition, Tool, End
-    switch (node.type) {
-      case 'llm':
-        return this.executeLLMNode(node, input);
-      case 'rag':
-        return this.executeRAGNode(node, input);
-      case 'condition':
-        return this.executeConditionNode(node, input);
-      case 'tool':
-        return this.executeToolNode(node, input);
-      case 'end':
-        return this.executeEndNode(node, input);
-      default:
-        throw new Error(`Unknown node type: ${node.type}`);
+  private strategies: Map<string, NodeExecutionStrategy>;
+
+  constructor(
+    private startNodeStrategy: StartNodeStrategy,
+    private llmNodeStrategy: LLMNodeStrategy,
+    private endNodeStrategy: EndNodeStrategy,
+    private conditionNodeStrategy: ConditionNodeStrategy,
+    private ragNodeStrategy: RAGNodeStrategy,
+    private toolNodeStrategy: ToolNodeStrategy,
+  ) {
+    // Register strategies by node type
+    this.strategies = new Map([
+      ['start', this.startNodeStrategy],
+      ['llm', this.llmNodeStrategy],
+      ['end', this.endNodeStrategy],
+      ['condition', this.conditionNodeStrategy],
+      ['rag', this.ragNodeStrategy],
+      ['tool', this.toolNodeStrategy],
+    ]);
+  }
+
+  async execute(node: any, input: any): Promise<ExecutionResult> {
+    const strategy = this.strategies.get(node.type);
+
+    if (!strategy) {
+      throw new Error(`No strategy found for node type: ${node.type}`);
     }
-  }
 
-  private async executeLLMNode(node: any, input: any): Promise<any> {
-    // TODO: Execute LLM node with LangChain
-    return { output: null, cost: 0, duration: 0 };
-  }
-
-  private async executeRAGNode(node: any, input: any): Promise<any> {
-    // TODO: Execute RAG node (vector search + LLM)
-    return { output: null, cost: 0, duration: 0 };
-  }
-
-  private async executeConditionNode(node: any, input: any): Promise<any> {
-    // TODO: Execute condition node (branching logic)
-    return { output: null, cost: 0, duration: 0 };
-  }
-
-  private async executeToolNode(node: any, input: any): Promise<any> {
-    // TODO: Execute tool node (function call)
-    return { output: null, cost: 0, duration: 0 };
-  }
-
-  private async executeEndNode(node: any, input: any): Promise<any> {
-    // TODO: Execute end node (workflow termination)
-    return { output: input, cost: 0, duration: 0 };
-  }
-
-  calculateCost(model: string, inputTokens: number, outputTokens: number): number {
-    // TODO: Calculate cost based on model pricing
-    const pricing = {
-      'claude-3-5-sonnet-20241022': { input: 3.0, output: 15.0 },
-      'claude-3-5-haiku-20241022': { input: 0.8, output: 4.0 },
-    };
-    return 0;
+    return strategy.execute(node, input);
   }
 }

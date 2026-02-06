@@ -23,6 +23,9 @@ export class Workflow {
   @Prop({ default: 'draft' })
   version: string;
 
+  @Prop()
+  parentId: string;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 

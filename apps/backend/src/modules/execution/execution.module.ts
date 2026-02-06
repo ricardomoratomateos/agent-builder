@@ -9,6 +9,13 @@ import { ExecutionCacheService } from './cache/execution-cache.service';
 import { CacheKeyGenerator } from './cache/cache-key-generator';
 import { ExecutionState, ExecutionStateSchema } from './schemas/execution-state.schema';
 import { NodeResult, NodeResultSchema } from './schemas/node-result.schema';
+import { StartNodeStrategy } from './strategies/start-node.strategy';
+import { LLMNodeStrategy } from './strategies/llm-node.strategy';
+import { EndNodeStrategy } from './strategies/end-node.strategy';
+import { ConditionNodeStrategy } from './strategies/condition-node.strategy';
+import { RAGNodeStrategy } from './strategies/rag-node.strategy';
+import { ToolNodeStrategy } from './strategies/tool-node.strategy';
+import { WorkflowsModule } from '../workflows/workflows.module';
 
 @Module({
   imports: [
@@ -16,6 +23,7 @@ import { NodeResult, NodeResultSchema } from './schemas/node-result.schema';
       { name: ExecutionState.name, schema: ExecutionStateSchema },
       { name: NodeResult.name, schema: NodeResultSchema },
     ]),
+    WorkflowsModule,
   ],
   controllers: [ExecutionController],
   providers: [
@@ -25,6 +33,13 @@ import { NodeResult, NodeResultSchema } from './schemas/node-result.schema';
     DebugExecutor,
     ExecutionCacheService,
     CacheKeyGenerator,
+    // Register all strategies
+    StartNodeStrategy,
+    LLMNodeStrategy,
+    EndNodeStrategy,
+    ConditionNodeStrategy,
+    RAGNodeStrategy,
+    ToolNodeStrategy,
   ],
   exports: [ExecutionService],
 })

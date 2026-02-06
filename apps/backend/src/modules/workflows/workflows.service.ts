@@ -42,4 +42,36 @@ export class WorkflowsService {
       throw new NotFoundException(`Workflow with ID ${id} not found`);
     }
   }
+
+  async publish(id: string): Promise<Workflow> {
+    const draft = await this.findOne(id);
+
+    // Check if a production version already exists for this workflow
+    const existingProduction = await this.workflowModel
+      .findOne({ parentId: id, version: 'production' })
+      .exec();
+
+    if (existingProduction) {
+      // Update existing production version
+      existingProduction.name = draft.name;
+      existingProduction.description = draft.description;
+      existingProduction.nodes = draft.nodes;
+      existingProduction.edges = draft.edges;
+      existingProduction.config = draft.config;
+      existingProduction.updatedAt = new Date();
+      return existingProduction.save();
+    } else {
+      // Create new production version
+      const production = new this.workflowModel({
+        name: draft.name,
+        description: draft.description,
+        nodes: draft.nodes,
+        edges: draft.edges,
+        config: draft.config,
+        version: 'production',
+        parentId: id,
+      });
+      return production.save();
+    }
+  }
 }

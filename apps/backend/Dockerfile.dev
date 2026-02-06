@@ -3,6 +3,15 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# Install procps (provides ps command needed for NestJS watch mode)
+RUN apt-get update && apt-get install -y procps && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
 # Expose backend and debug ports
 EXPOSE 3000 9229
 

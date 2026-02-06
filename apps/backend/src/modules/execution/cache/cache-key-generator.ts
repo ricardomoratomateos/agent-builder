@@ -10,7 +10,21 @@ export class CacheKeyGenerator {
   }
 
   private hashObject(obj: any): string {
-    const str = JSON.stringify(obj, Object.keys(obj).sort());
+    let str: string;
+
+    // Handle null and undefined
+    if (obj === null) {
+      str = 'null';
+    } else if (obj === undefined) {
+      str = 'undefined';
+    } else if (typeof obj === 'object') {
+      // For objects and arrays, sort keys for consistent hashing
+      str = JSON.stringify(obj, Object.keys(obj).sort());
+    } else {
+      // For primitives (string, number, boolean)
+      str = JSON.stringify(obj);
+    }
+
     return crypto.createHash('sha256').update(str).digest('hex');
   }
 }

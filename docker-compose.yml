@@ -32,7 +32,7 @@ services:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_healthy
+        condition: service_started
     networks:
       - agent-builder-network
     healthcheck:
@@ -112,11 +112,6 @@ services:
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     networks:
       - agent-builder-network
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   agent-builder-network:

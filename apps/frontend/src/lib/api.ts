@@ -9,6 +9,36 @@ const api = axios.create({
   },
 });
 
+// Token interceptor - add JWT to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth error interceptor - redirect to login on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authApi = {
+  register: (data: { email: string; password: string; name: string }) =>
+    api.post('/auth/register', data),
+  login: (data: { email: string; password: string }) =>
+    api.post('/auth/login', data),
+};
+
 // Agents API
 export const agentsApi = {
   getAll: () => api.get('/agents'),
@@ -25,6 +55,7 @@ export const workflowsApi = {
   create: (data: any) => api.post('/workflows', data),
   update: (id: string, data: any) => api.put(`/workflows/${id}`, data),
   delete: (id: string) => api.delete(`/workflows/${id}`),
+  publish: (id: string) => api.post(`/workflows/${id}/publish`),
 };
 
 // Testing API
@@ -49,7 +80,18 @@ export const executionApi = {
   startDebug: (workflowId: string, input: any) =>
     api.post('/execution/debug/start', { workflowId, input }),
   step: (sessionId: string) => api.post(`/execution/debug/${sessionId}/step`),
+  continue: (sessionId: string) => api.post(`/execution/debug/${sessionId}/continue`),
   getState: (sessionId: string) => api.get(`/execution/debug/${sessionId}/state`),
+};
+
+// Conversations API
+export const conversationsApi = {
+  getAll: () => api.get('/conversations'),
+  getOne: (id: string) => api.get(`/conversations/${id}`),
+  create: (data: { agentId: string }) => api.post('/conversations', data),
+  sendMessage: (id: string, message: string) =>
+    api.post(`/conversations/${id}/messages`, { message }),
+  delete: (id: string) => api.delete(`/conversations/${id}`),
 };
 
 export default api;
